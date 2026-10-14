@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Sitemap: https://civicops.culltron.app/sitemap.xml

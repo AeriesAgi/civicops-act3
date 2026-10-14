@@ -1,0 +1,645 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/map-feature-collection.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "FeatureCollection",
+      "type": "string"
+    },
+    "features": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "Feature",
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "geometry": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "const": "Point",
+                    "type": "string"
+                  },
+                  "coordinates": {
+                    "$ref": "#/$defs/position"
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "const": "Polygon",
+                    "type": "string"
+                  },
+                  "coordinates": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "maxItems": 65,
+                      "items": {
+                        "$ref": "#/$defs/position"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ]
+              }
+            ]
+          },
+          "properties": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "layer": {
+                    "const": "municipalities",
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "synthetic": {
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 160
+                  }
+                },
+                "required": [
+                  "layer",
+                  "id",
+                  "synthetic",
+                  "name"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "layer": {
+                    "const": "wards",
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "synthetic": {
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 160
+                  },
+                  "municipalityId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "openCases": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "slaBreaches": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "layer",
+                  "id",
+                  "synthetic",
+                  "name",
+                  "municipalityId",
+                  "openCases",
+                  "slaBreaches"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "layer": {
+                    "const": "cases",
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "synthetic": {
+                    "type": "boolean"
+                  },
+                  "referenceNumber": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 160
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "Urgent",
+                      "High",
+                      "Medium",
+                      "Low"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "New",
+                      "Triaged",
+                      "PendingApproval",
+                      "Approved",
+                      "Assigned",
+                      "InProgress",
+                      "WaitingForCitizen",
+                      "Resolved",
+                      "Closed"
+                    ]
+                  },
+                  "department": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 160
+                  },
+                  "wardId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "municipalityId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "slaBreached": {
+                    "type": "boolean"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "updatedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "needsHumanReview": {
+                    "type": "boolean"
+                  },
+                  "humanApprovalRecorded": {
+                    "type": "boolean"
+                  },
+                  "detailUrl": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 240
+                  },
+                  "locationProvenance": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "layer",
+                  "id",
+                  "synthetic",
+                  "referenceNumber",
+                  "title",
+                  "priority",
+                  "status",
+                  "department",
+                  "wardId",
+                  "municipalityId",
+                  "slaBreached",
+                  "createdAt",
+                  "updatedAt",
+                  "version",
+                  "needsHumanReview",
+                  "humanApprovalRecorded",
+                  "detailUrl",
+                  "locationProvenance"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "layer": {
+                    "const": "crews",
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "synthetic": {
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 160
+                  },
+                  "department": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 160
+                  },
+                  "status": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 40
+                  },
+                  "availability": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 40
+                  },
+                  "shift": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 40
+                  },
+                  "lastSeenAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "skills": {
+                    "type": "array",
+                    "minItems": 0,
+                    "maxItems": 64,
+                    "items": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 80
+                    }
+                  },
+                  "detailUrl": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 240
+                  },
+                  "onShift": {
+                    "type": "boolean"
+                  },
+                  "sharing": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "layer",
+                  "id",
+                  "synthetic",
+                  "name",
+                  "department",
+                  "status",
+                  "availability",
+                  "shift",
+                  "lastSeenAt",
+                  "skills",
+                  "detailUrl",
+                  "onShift",
+                  "sharing"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "layer": {
+                    "const": "hazards",
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "synthetic": {
+                    "type": "boolean"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 160
+                  },
+                  "eventType": {
+                    "type": "string",
+                    "enum": [
+                      "crash",
+                      "stalled-vehicle",
+                      "flooding",
+                      "fire",
+                      "smoke",
+                      "blocked-lane",
+                      "debris",
+                      "downed-line",
+                      "open-trench",
+                      "water",
+                      "burst-main",
+                      "road-blocked"
+                    ]
+                  },
+                  "exclusionRadiusMeters": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2000
+                  },
+                  "confidence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "occurredAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "cameraId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "provenance": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "layer",
+                  "id",
+                  "synthetic",
+                  "title",
+                  "eventType",
+                  "exclusionRadiusMeters",
+                  "confidence",
+                  "occurredAt",
+                  "cameraId",
+                  "provenance"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "layer": {
+                    "const": "assets",
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "synthetic": {
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 160
+                  },
+                  "assetType": {
+                    "type": "string",
+                    "enum": [
+                      "substation",
+                      "reservoir",
+                      "depot"
+                    ]
+                  }
+                },
+                "required": [
+                  "layer",
+                  "id",
+                  "synthetic",
+                  "name",
+                  "assetType"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "layer": {
+                    "const": "heatmap",
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "weight": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "metric": {
+                    "type": "string",
+                    "enum": [
+                      "cases",
+                      "hazards"
+                    ]
+                  },
+                  "cellSizeDegrees": {
+                    "type": "number",
+                    "minimum": 0.008,
+                    "maximum": 0.008
+                  },
+                  "aggregated": {
+                    "const": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "layer",
+                  "count",
+                  "weight",
+                  "metric",
+                  "cellSizeDegrees",
+                  "aggregated"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "geometry",
+          "properties"
+        ]
+      }
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "nextPage": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10000
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "synthetic": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "type",
+    "features",
+    "total",
+    "nextPage",
+    "generatedAt",
+    "synthetic"
+  ],
+  "description": "Tenant-authorized RFC 7946 structured municipal features. Layers pages are capped at 500, wards at 64; heat cells aggregate incidents/hazards only. Coordinates are longitude/latitude in the regional SA envelope. No raw person locations, imagery or identification data.",
+  "$defs": {
+    "position": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "type": "number",
+          "minimum": 16,
+          "maximum": 33
+        },
+        {
+          "type": "number",
+          "minimum": -35,
+          "maximum": -22
+        }
+      ],
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "example": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": "demo-ward-01",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                30.88,
+                -30.02
+              ],
+              [
+                30.98,
+                -30.02
+              ],
+              [
+                31.0,
+                -29.94
+              ],
+              [
+                30.91,
+                -29.94
+              ],
+              [
+                30.88,
+                -30.02
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "layer": "wards",
+          "id": "demo-ward-01",
+          "name": "Ward 01 · SYNTHETIC",
+          "municipalityId": "demo-metro",
+          "synthetic": true,
+          "openCases": 0,
+          "slaBreaches": 0
+        }
+      }
+    ],
+    "total": 1,
+    "nextPage": null,
+    "generatedAt": "2026-10-08T12:00:00Z",
+    "synthetic": true
+  }
+}

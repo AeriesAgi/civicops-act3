@@ -1,0 +1,51 @@
+1
+00:00:09,186 --> 00:00:15,463
+Resident desk: one front door for voice, chat, SMS and WhatsApp. Everything here is synthetic and simulated.
+
+2
+00:00:15,663 --> 00:00:25,043
+A resident reports a blocked stormwater drain to the simulated agent. It asks what and where, and gives a reference.
+
+3
+00:00:25,243 --> 00:00:35,610
+Control room: bounded agents triage and recommend. Nothing is dispatched without a human.
+
+4
+00:00:35,810 --> 00:00:40,949
+Each case shows the agent runs, provider label (deterministic-fallback), confidence and the human-review gate.
+
+5
+00:00:41,149 --> 00:00:49,260
+The dispatcher approves the response, then assigns an eligible crew. Zendesk delivery is a simulated outbox.
+
+6
+00:00:49,460 --> 00:01:03,144
+Live map: synthetic cases, crews and hazard zones. Aggregated operations only, no person tracking or crime prediction.
+
+7
+00:01:03,344 --> 00:01:07,869
+Agencies: Traffic, EMS, Fire and Electricity share one incident, one commander and one timeline.
+
+8
+00:01:08,069 --> 00:01:13,430
+A supervisor assigns the incident commander and decides the neighbouring metro's mutual-aid request.
+
+9
+00:01:13,630 --> 00:01:22,243
+Camera feed is SIMULATED and scene-only: no faces, no plates. A human confirms or dismisses every event.
+
+10
+00:01:22,443 --> 00:01:37,144
+SOS: a deliberate 3-second hold alerts the municipal control room. It never replaces 10111, 10177 or 112.
+
+11
+00:01:37,344 --> 00:01:48,623
+The control room acknowledges, dispatches or hands over, and resolves. Every step is audited with a named human.
+
+12
+00:01:48,823 --> 00:01:56,479
+Audit: an append-only hash chain, verified locally. No AMD endpoint exists for this build; reasoning shown is deterministic and simulated.
+
+13
+00:01:56,679 --> 00:02:03,487
+CivicOps: a conversational front door, accountable AI assistance, and a human decision at every dispatch, mutual-aid request and SOS.

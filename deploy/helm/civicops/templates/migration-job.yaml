@@ -1,0 +1,53 @@
+{{- if and .Values.migration.enabled (eq .Values.storage.mode "postgres") }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "civicops.fullname" . }}-migrate
+  labels:
+    {{- include "civicops.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: {{ .Values.migration.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "civicops.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        civicops.io/component: migration
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        {{- include "civicops.securityContext" . | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: migrate
+          image: {{ include "civicops.image" . | quote }}
+          securityContext:
+            {{- include "civicops.containerSecurityContext" . | nindent 12 }}
+          command: [dotnet, CivicOps.dll, --migrate]
+          env:
+            - {name: CIVICOPS_STORAGE, value: postgres}
+            - {name: CIVICOPS_DATA_DIR, value: /app/Data}
+          envFrom:
+            - secretRef:
+                name: {{ default .Values.existingSecret .Values.migration.existingSecret }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - {name: data, mountPath: /app/Data}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: data
+          emptyDir: {sizeLimit: 64Mi}
+        - name: tmp
+          emptyDir: {medium: Memory, sizeLimit: 64Mi}
+{{- end }}

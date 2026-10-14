@@ -1,0 +1,22 @@
+{{- if .Values.serviceMonitor.enabled }}
+# CivicOps exports OTLP. Scrape the owner's collector Prometheus exporter, not a nonexistent app /metrics.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "civicops.fullname" . }}
+  labels:
+    {{- include "civicops.labels" . | nindent 4 }}
+    {{- with .Values.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  namespaceSelector:
+    matchNames: [{{ .Values.serviceMonitor.collectorNamespace | quote }}]
+  selector:
+    matchLabels:
+      {{- toYaml .Values.serviceMonitor.collectorServiceLabels | nindent 6 }}
+  endpoints:
+    - port: {{ .Values.serviceMonitor.port }}
+      path: /metrics
+      interval: {{ .Values.serviceMonitor.interval }}
+{{- end }}

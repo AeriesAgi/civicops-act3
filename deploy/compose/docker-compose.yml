@@ -1,0 +1,109 @@
+name: civicops
+services:
+  civicops:
+    image: "${CIVICOPS_APP_IMAGE:-civicops:round7}"
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    # Set an absolute private path and also pass it to compose --env-file for interpolation.
+    env_file:
+      - "${CIVICOPS_COMPOSE_ENV_FILE:-../../.env.example}"
+    environment:
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_ENVIRONMENT: Production
+      CIVICOPS_DEMO_MODE: "${CIVICOPS_DEMO_MODE:-false}"
+      CIVICOPS_STORAGE: "${CIVICOPS_STORAGE:-postgres}"
+      CIVICOPS_DATABASE_URL: "${CIVICOPS_DATABASE_URL:?Set a private connection string using host postgres or a managed database}"
+      CIVICOPS_DATA_DIR: /app/Data
+      CIVICOPS_EMAIL_MODE: "${CIVICOPS_EMAIL_MODE:-outbox}"
+      CIVICOPS_TELEMETRY: "${CIVICOPS_TELEMETRY:-off}"
+    ports:
+      - "127.0.0.1:${CIVICOPS_COMPOSE_HTTP_PORT:-5080}:8080"
+    volumes:
+      - civicops-data:/app/Data
+    read_only: true
+    tmpfs:
+      - /tmp:uid=1654,gid=1654,mode=1770,size=64m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    stop_grace_period: 35s
+    restart: unless-stopped
+    networks: [backend, edge]
+
+  postgres:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-civicops}"
+      POSTGRES_USER: "${POSTGRES_USER:-civicops}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set privately; no trust authentication in deployment}"
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    cap_drop: [ALL]
+    # The official entrypoint needs these only to initialize and own its database volume.
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    networks: [backend]
+
+  otel-collector:
+    profiles: [observability]
+    image: otel/opentelemetry-collector-contrib:0.161.0
+    command: [--config=/etc/otelcol/config.yaml]
+    volumes:
+      - ./otel-collector.yml:/etc/otelcol/config.yaml:ro
+    read_only: true
+    user: "10001:10001"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    networks: [backend]
+
+  amd-vllm:
+    profiles: [amd-vllm]
+    # Upstream stable manifest resolved read-only on 2026-10-08; hardware compatibility unverified.
+    image: "${CIVICOPS_VLLM_IMAGE:-vllm/vllm-openai-rocm@sha256:749f6f3f944f12af49966ac523c1f8573e4b229594b541954bd5f879b4496b1f}"
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add: [video]
+    shm_size: 2gb
+    environment:
+      VLLM_NO_USAGE_STATS: "1"
+      VLLM_API_KEY: "${CIVICOPS_LLM_API_KEY:-}"
+    volumes:
+      - model-cache:/root/.cache/huggingface
+    command:
+      - --model
+      - "${CIVICOPS_LLM_MODEL:-Qwen/Qwen3-8B}"
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --max-model-len
+      - "8192"
+      - --gpu-memory-utilization
+      - "0.85"
+      - --tensor-parallel-size
+      - "${CIVICOPS_VLLM_TENSOR_PARALLEL:-1}"
+      - --disable-log-requests
+    restart: unless-stopped
+    networks: [backend, model-download]
+
+networks:
+  backend:
+    internal: true
+  edge: {}
+  model-download: {}
+volumes:
+  civicops-data: {}
+  postgres-data: {}
+  model-cache: {}

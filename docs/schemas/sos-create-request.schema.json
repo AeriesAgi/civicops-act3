@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/sos-create-request.schema.json",
+  "title": "Synthetic SOS trigger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["operationId", "channel", "note", "contact", "addressOrLandmark", "silent", "location", "accuracyMeters", "batteryPercent"],
+  "properties": {
+    "operationId": {"type": "string", "minLength": 8, "maxLength": 128},
+    "channel": {"type": "string", "minLength": 2, "maxLength": 32},
+    "note": {"type": ["string", "null"], "maxLength": 2000},
+    "contact": {"type": ["string", "null"], "maxLength": 320},
+    "addressOrLandmark": {"type": ["string", "null"], "maxLength": 240},
+    "silent": {"type": "boolean"},
+    "location": {
+      "anyOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/point"}
+      ]
+    },
+    "accuracyMeters": {"type": ["number", "null"], "minimum": 0, "maximum": 10000},
+    "batteryPercent": {"type": ["integer", "null"], "minimum": 0, "maximum": 100}
+  },
+  "$defs": {
+    "point": {
+      "type": "object", "additionalProperties": false,
+      "required": ["longitude", "latitude"],
+      "properties": {
+        "longitude": {"type": "number", "minimum": 16, "maximum": 33},
+        "latitude": {"type": "number", "minimum": -35, "maximum": -22}
+      }
+    }
+  },
+  "description": "Location is voluntarily supplied only after deliberate SOS confirmation. A resident without a point supplies an address or landmark instead. Synthetic fixture only; no responder is contacted."
+}

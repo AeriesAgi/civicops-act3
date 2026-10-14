@@ -1,0 +1,466 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "note": "Synthetic, realistic multi-agency catalogue for demos and VR module mapping. Additive to work-orders.v1.json; v1 is unchanged.",
+  "agencies": [
+    {
+      "id": "electricity",
+      "name": "Electricity",
+      "group": "utilities",
+      "colour": "#f2b705",
+      "icon": "bolt",
+      "restricted": false,
+      "roleNames": [
+        "electricity.dispatcher",
+        "electricity.supervisor"
+      ]
+    },
+    {
+      "id": "water",
+      "name": "Water & Sanitation",
+      "group": "utilities",
+      "colour": "#1f78b4",
+      "icon": "droplet",
+      "restricted": false,
+      "roleNames": [
+        "water.dispatcher",
+        "water.supervisor"
+      ]
+    },
+    {
+      "id": "roads",
+      "name": "Roads & Stormwater",
+      "group": "utilities",
+      "colour": "#6a6a6a",
+      "icon": "road",
+      "restricted": false,
+      "roleNames": [
+        "roads.dispatcher",
+        "roads.supervisor"
+      ]
+    },
+    {
+      "id": "waste",
+      "name": "Waste Management",
+      "group": "utilities",
+      "colour": "#33a02c",
+      "icon": "trash",
+      "restricted": false,
+      "roleNames": [
+        "waste.dispatcher",
+        "waste.supervisor"
+      ]
+    },
+    {
+      "id": "metro-police",
+      "name": "Metro Police",
+      "group": "safety",
+      "colour": "#1d3557",
+      "icon": "shield",
+      "restricted": true,
+      "roleNames": [
+        "metro-police.dispatcher",
+        "metro-police.supervisor"
+      ]
+    },
+    {
+      "id": "traffic",
+      "name": "Traffic",
+      "group": "safety",
+      "colour": "#e76f51",
+      "icon": "traffic-cone",
+      "restricted": false,
+      "roleNames": [
+        "traffic.dispatcher",
+        "traffic.officer"
+      ]
+    },
+    {
+      "id": "fire",
+      "name": "Fire & Rescue",
+      "group": "safety",
+      "colour": "#d62828",
+      "icon": "flame",
+      "restricted": false,
+      "roleNames": [
+        "fire.dispatcher",
+        "fire.station-officer"
+      ]
+    },
+    {
+      "id": "ems",
+      "name": "Emergency Medical Services",
+      "group": "safety",
+      "colour": "#2a9d8f",
+      "icon": "heart-pulse",
+      "restricted": false,
+      "roleNames": [
+        "ems.dispatcher",
+        "ems.shift-leader"
+      ]
+    },
+    {
+      "id": "disaster",
+      "name": "Disaster Management",
+      "group": "safety",
+      "colour": "#7b2cbf",
+      "icon": "siren",
+      "restricted": false,
+      "roleNames": [
+        "disaster.coordinator"
+      ]
+    }
+  ],
+  "roleMappings": [
+    {
+      "role": "electricity.dispatcher",
+      "agency": "electricity",
+      "baseRole": "dispatcher"
+    },
+    {
+      "role": "electricity.supervisor",
+      "agency": "electricity",
+      "baseRole": "supervisor"
+    },
+    {
+      "role": "water.dispatcher",
+      "agency": "water",
+      "baseRole": "dispatcher"
+    },
+    {
+      "role": "water.supervisor",
+      "agency": "water",
+      "baseRole": "supervisor"
+    },
+    {
+      "role": "roads.dispatcher",
+      "agency": "roads",
+      "baseRole": "dispatcher"
+    },
+    {
+      "role": "roads.supervisor",
+      "agency": "roads",
+      "baseRole": "supervisor"
+    },
+    {
+      "role": "waste.dispatcher",
+      "agency": "waste",
+      "baseRole": "dispatcher"
+    },
+    {
+      "role": "waste.supervisor",
+      "agency": "waste",
+      "baseRole": "supervisor"
+    },
+    {
+      "role": "metro-police.dispatcher",
+      "agency": "metro-police",
+      "baseRole": "dispatcher"
+    },
+    {
+      "role": "metro-police.supervisor",
+      "agency": "metro-police",
+      "baseRole": "supervisor"
+    },
+    {
+      "role": "traffic.dispatcher",
+      "agency": "traffic",
+      "baseRole": "dispatcher"
+    },
+    {
+      "role": "traffic.officer",
+      "agency": "traffic",
+      "baseRole": "dispatcher"
+    },
+    {
+      "role": "fire.dispatcher",
+      "agency": "fire",
+      "baseRole": "dispatcher"
+    },
+    {
+      "role": "fire.station-officer",
+      "agency": "fire",
+      "baseRole": "supervisor"
+    },
+    {
+      "role": "ems.dispatcher",
+      "agency": "ems",
+      "baseRole": "dispatcher"
+    },
+    {
+      "role": "ems.shift-leader",
+      "agency": "ems",
+      "baseRole": "supervisor"
+    },
+    {
+      "role": "disaster.coordinator",
+      "agency": "disaster",
+      "baseRole": "supervisor"
+    }
+  ],
+  "incidentTypes": [
+    {
+      "code": "TRAFFIC.CRASH_SCENE",
+      "agency": "traffic",
+      "title": "Crash scene management",
+      "defaultPriority": "High",
+      "slaMinutes": 15,
+      "hazards": [
+        "Moving traffic",
+        "Fuel spill"
+      ],
+      "ppe": [
+        "High-visibility vest",
+        "Gloves"
+      ],
+      "skills": [
+        "Scene safety",
+        "Traffic control"
+      ],
+      "certifications": [
+        "ICS 100",
+        "Traffic point duty"
+      ]
+    },
+    {
+      "code": "TRAFFIC.SIGNAL_OUTAGE_POINT_DUTY",
+      "agency": "traffic",
+      "title": "Signal outage point duty",
+      "defaultPriority": "Medium",
+      "slaMinutes": 30,
+      "hazards": [
+        "Moving traffic"
+      ],
+      "ppe": [
+        "High-visibility vest"
+      ],
+      "skills": [
+        "Traffic control"
+      ],
+      "certifications": [
+        "Traffic point duty"
+      ]
+    },
+    {
+      "code": "METRO.PUBLIC_SAFETY_PATROL_REQUEST",
+      "agency": "metro-police",
+      "title": "Public safety patrol request",
+      "defaultPriority": "Medium",
+      "slaMinutes": 60,
+      "hazards": [
+        "Crowd"
+      ],
+      "ppe": [
+        "Duty uniform"
+      ],
+      "skills": [
+        "Scene safety",
+        "De-escalation"
+      ],
+      "certifications": [
+        "ICS 100"
+      ]
+    },
+    {
+      "code": "FIRE.STRUCTURE_FIRE",
+      "agency": "fire",
+      "title": "Structure fire",
+      "defaultPriority": "Critical",
+      "slaMinutes": 10,
+      "hazards": [
+        "Smoke",
+        "Structural collapse",
+        "Heat"
+      ],
+      "ppe": [
+        "Structural fire kit",
+        "SCBA"
+      ],
+      "skills": [
+        "Fire suppression",
+        "Scene safety"
+      ],
+      "certifications": [
+        "ICS 200",
+        "Hazmat awareness"
+      ]
+    },
+    {
+      "code": "FIRE.VELD_FIRE",
+      "agency": "fire",
+      "title": "Veld fire",
+      "defaultPriority": "High",
+      "slaMinutes": 20,
+      "hazards": [
+        "Smoke",
+        "Wind shift"
+      ],
+      "ppe": [
+        "Wildland PPE"
+      ],
+      "skills": [
+        "Wildland suppression"
+      ],
+      "certifications": [
+        "ICS 100"
+      ]
+    },
+    {
+      "code": "FIRE.VEHICLE_EXTRICATION",
+      "agency": "fire",
+      "title": "Vehicle extrication",
+      "defaultPriority": "Critical",
+      "slaMinutes": 10,
+      "hazards": [
+        "Sharp metal",
+        "Fuel spill",
+        "Airbags"
+      ],
+      "ppe": [
+        "Rescue kit",
+        "Eye protection"
+      ],
+      "skills": [
+        "Extrication",
+        "Scene safety"
+      ],
+      "certifications": [
+        "Rescue technician",
+        "ICS 100"
+      ]
+    },
+    {
+      "code": "EMS.MEDICAL_RESPONSE",
+      "agency": "ems",
+      "title": "Medical response",
+      "defaultPriority": "High",
+      "slaMinutes": 15,
+      "hazards": [
+        "Biological"
+      ],
+      "ppe": [
+        "Gloves",
+        "Mask"
+      ],
+      "skills": [
+        "Patient care"
+      ],
+      "certifications": [
+        "Basic Life Support"
+      ]
+    },
+    {
+      "code": "EMS.MASS_CASUALTY",
+      "agency": "ems",
+      "title": "Mass casualty incident",
+      "defaultPriority": "Critical",
+      "slaMinutes": 10,
+      "hazards": [
+        "Biological",
+        "Scene congestion"
+      ],
+      "ppe": [
+        "Gloves",
+        "Mask",
+        "High-visibility vest"
+      ],
+      "skills": [
+        "Triage",
+        "Patient care"
+      ],
+      "certifications": [
+        "Basic Life Support",
+        "ICS 200"
+      ]
+    },
+    {
+      "code": "DISASTER.FLOOD_EVACUATION",
+      "agency": "disaster",
+      "title": "Flood evacuation",
+      "defaultPriority": "Critical",
+      "slaMinutes": 30,
+      "hazards": [
+        "Swift water",
+        "Electrical"
+      ],
+      "ppe": [
+        "Life jacket",
+        "Waders"
+      ],
+      "skills": [
+        "Evacuation coordination"
+      ],
+      "certifications": [
+        "ICS 200",
+        "Swift-water awareness"
+      ]
+    },
+    {
+      "code": "DISASTER.SHELTER_OPS",
+      "agency": "disaster",
+      "title": "Shelter operations",
+      "defaultPriority": "Medium",
+      "slaMinutes": 120,
+      "hazards": [
+        "Crowd",
+        "Sanitation"
+      ],
+      "ppe": [
+        "Gloves"
+      ],
+      "skills": [
+        "Shelter management"
+      ],
+      "certifications": [
+        "ICS 100"
+      ]
+    },
+    {
+      "code": "ELECTRICITY.DOWNED_LINE",
+      "agency": "electricity",
+      "title": "Downed line make-safe",
+      "defaultPriority": "Critical",
+      "slaMinutes": 30,
+      "hazards": [
+        "Live conductor"
+      ],
+      "ppe": [
+        "Insulated gloves",
+        "Arc-rated clothing"
+      ],
+      "skills": [
+        "Live-line isolation"
+      ],
+      "certifications": [
+        "Electrical make-safe"
+      ]
+    },
+    {
+      "code": "ROADS.DEBRIS_CLEARANCE",
+      "agency": "roads",
+      "title": "Debris clearance",
+      "defaultPriority": "Medium",
+      "slaMinutes": 60,
+      "hazards": [
+        "Moving traffic"
+      ],
+      "ppe": [
+        "High-visibility vest",
+        "Gloves"
+      ],
+      "skills": [
+        "Traffic control"
+      ],
+      "certifications": [
+        "Traffic point duty"
+      ]
+    }
+  ],
+  "icsRoles": [
+    "Incident Commander",
+    "Operations Section Chief",
+    "Liaison Officer",
+    "Safety Officer",
+    "Agency Representative"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/sos-action-request.schema.json",
+  "title": "Named human SOS action",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["operationId", "note"],
+  "properties": {
+    "operationId": {"type": "string", "minLength": 8, "maxLength": 128},
+    "note": {"type": "string", "minLength": 2, "maxLength": 2000}
+  },
+  "description": "Acknowledge, assess, dispatch, resolve and false-alarm changes require a named authorised human and an auditable reason."
+}

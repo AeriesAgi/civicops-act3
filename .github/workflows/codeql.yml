@@ -1,0 +1,100 @@
+name: CodeQL
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "19 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            build_mode: manual
+          - language: javascript-typescript
+            build_mode: none
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        if: matrix.language == 'csharp'
+        with:
+          dotnet-version: "10.0.x"
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build_mode }}
+          queries: security-extended
+      - name: Compile C# for extraction
+        if: matrix.language == 'csharp'
+        run: dotnet build CivicOps.sln --configuration Release --no-incremental
+      # GitHub code scanning upload requires GitHub Code Security on internal/private repos.
+      # By default the SARIF is kept as a workflow artifact and gated here; set the repository
+      # variable CODE_SCANNING_UPLOAD=true once Code Security is enabled to upload to code scanning.
+      - name: Analyze (SARIF to artifact; upload only when enabled)
+        uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          category: "/language:${{ matrix.language }}"
+          output: codeql-results
+          upload: ${{ vars.CODE_SCANNING_UPLOAD == 'true' && 'always' || 'never' }}
+      - name: Keep SARIF as artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: codeql-sarif-${{ matrix.language }}
+          path: codeql-results
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Fail on error-level CodeQL results
+        shell: python
+        run: |
+          import glob, json, sys
+          errors = []
+          total = 0
+          paths = glob.glob("codeql-results/*.sarif")
+          if not paths:
+              sys.exit("CodeQL analysis produced no SARIF files")
+          for path in paths:
+              with open(path, encoding="utf-8") as fh:
+                  sarif = json.load(fh)
+              if sarif.get("version") != "2.1.0" or not sarif.get("runs"):
+                  sys.exit(f"Invalid or incomplete CodeQL SARIF: {path}")
+              for run in sarif["runs"]:
+                  if any(invocation.get("executionSuccessful") is False for invocation in run.get("invocations", [])):
+                      sys.exit(f"Unsuccessful CodeQL analysis in {path}")
+                  rule_list = run.get("tool", {}).get("driver", {}).get("rules", []) or []
+                  rules = {rule.get("id"): rule for rule in rule_list}
+                  for result in run.get("results", []) or []:
+                      total += 1
+                      rule = rules.get(result.get("ruleId"))
+                      rule_index = result.get("ruleIndex")
+                      if rule is None and isinstance(rule_index, int) and 0 <= rule_index < len(rule_list):
+                          rule = rule_list[rule_index]
+                      level = result.get("level") or ((rule or {}).get("defaultConfiguration") or {}).get("level", "warning")
+                      loc = (result.get("locations") or [{}])[0].get("physicalLocation", {})
+                      where = f'{loc.get("artifactLocation", {}).get("uri", "?")}:{loc.get("region", {}).get("startLine", "?")}'
+                      rule_id = result.get("ruleId") or (rule or {}).get("id", "?")
+                      line = f'{level} {rule_id} {where} {result.get("message", {}).get("text", "")[:200]}'
+                      print(line)
+                      if level == "error":
+                          errors.append(line)
+          print(f"CodeQL results: {total} total, {len(errors)} error-level")
+          sys.exit(1 if errors else 0)

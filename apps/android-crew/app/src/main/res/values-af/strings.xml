@@ -1,0 +1,9 @@
+<resources>
+    <string name="jobs">Take</string>
+    <string name="my_jobs">My take</string>
+    <string name="shift">Skof</string>
+    <string name="settings">Instellings</string>
+    <string name="withdraw_consent">Trek toestemming terug</string>
+    <string name="off_shift">Van diens · liggingdeling is AF</string>
+    <string name="collection_notice">Beoordeel, roeteer en bestuur die gerapporteerde munisipale diensprobleem; stuur diensopdaterings slegs wanneer dit afsonderlik versoek is.</string>
+</resources>

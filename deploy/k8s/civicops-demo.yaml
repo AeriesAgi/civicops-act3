@@ -1,0 +1,76 @@
+# Synthetic probe example only. Owner must supply a reviewed image digest, durable
+# PostgreSQL/secrets, HTTPS ingress and municipality configuration for production.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: civicops-synthetic
+  labels:
+    app: civicops-synthetic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: civicops-synthetic
+  template:
+    metadata:
+      labels:
+        app: civicops-synthetic
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+      containers:
+        - name: civicops
+          image: civicops:owner-build-required
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: CIVICOPS_DEMO_MODE
+              value: "true"
+            - name: CIVICOPS_DATA_DIR
+              value: /app/Data
+            - name: CIVICOPS_TELEMETRY
+              value: "off"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          startupProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 2
+          volumeMounts:
+            - name: data
+              mountPath: /app/Data
+            - name: temporary
+              mountPath: /tmp
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: temporary
+          emptyDir: {}

@@ -1,0 +1,17 @@
+[
+  {"id":"roads-pothole","description":"A synthetic pothole is damaging the road surface.","category":"Roads","department":"Roads and Stormwater","priority":"Medium","workOrderTypeCode":"ROADS.POTHOLE_REPAIR"},
+  {"id":"roads-stormwater","description":"Synthetic stormwater drain blocked with leaves.","category":"Roads","department":"Roads and Stormwater","priority":"High","workOrderTypeCode":"ROADS.BLOCKED_DRAIN"},
+  {"id":"roads-drain","description":"A synthetic drain beside the road is blocked.","category":"Roads","department":"Roads and Stormwater","priority":"High","workOrderTypeCode":"ROADS.BLOCKED_DRAIN"},
+  {"id":"water-burst","description":"Synthetic burst pipe leaking water on the verge.","category":"Water","department":"Water and Sanitation","priority":"Medium","workOrderTypeCode":"WATER.BURST_MAIN"},
+  {"id":"water-supply","description":"Synthetic water supply outage affecting a ward.","category":"Water","department":"Water and Sanitation","priority":"High","workOrderTypeCode":"WATER.BURST_MAIN"},
+  {"id":"power-outage","description":"Synthetic power outage in a municipal area.","category":"Electricity","department":"Electricity","priority":"High","workOrderTypeCode":"ELEC.STREETLIGHT_FAULT"},
+  {"id":"power-streetlight","description":"Synthetic streetlight has stopped working.","category":"Electricity","department":"Electricity","priority":"Medium","workOrderTypeCode":"ELEC.STREETLIGHT_FAULT"},
+  {"id":"waste-rubbish","description":"Synthetic rubbish dumped beside a public bin.","category":"Waste","department":"Waste Management","priority":"Medium","workOrderTypeCode":"WASTE.ILLEGAL_DUMPING"},
+  {"id":"waste-collection","description":"Synthetic waste collection was missed.","category":"Waste","department":"Waste Management","priority":"Medium","workOrderTypeCode":"WASTE.ILLEGAL_DUMPING"},
+  {"id":"general-unclear","description":"Something appears wrong at the synthetic community facility.","category":"General service","department":"Public Works","priority":"Medium","workOrderTypeCode":"GENERAL.SERVICE_INSPECTION"},
+  {"id":"hazard-fire","description":"Synthetic fire near a power distribution cabinet.","category":"Electricity","department":"Electricity","priority":"Urgent","workOrderTypeCode":"ELEC.STREETLIGHT_FAULT"},
+  {"id":"hazard-wire","description":"Synthetic live wire hanging from an electricity pole.","category":"Electricity","department":"Electricity","priority":"Urgent","workOrderTypeCode":"ELEC.LIVE_WIRE_DOWN"},
+  {"id":"hazard-trapped","description":"Synthetic blocked stormwater drain with someone trapped nearby.","category":"Roads","department":"Roads and Stormwater","priority":"Urgent","workOrderTypeCode":"ROADS.BLOCKED_DRAIN"},
+  {"id":"hazard-home","description":"Synthetic stormwater flooding inside a home.","category":"Emergency","department":"Emergency Services","priority":"Urgent","workOrderTypeCode":"EMERG.FLOOD_RESPONSE"},
+  {"id":"mixed-roads-water","description":"Synthetic stormwater blocked on the road and water collecting nearby.","category":"Roads","department":"Roads and Stormwater","priority":"High","workOrderTypeCode":"ROADS.BLOCKED_DRAIN"}
+]

@@ -1,0 +1,81 @@
+replicaCount: 1
+image:
+  repository: civicops
+  tag: round7
+  digest: "" # Set the owner-built, scanned image digest before production.
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+storage:
+  mode: postgres
+  persistence:
+    enabled: false
+    existingClaim: ""
+    storageClass: ""
+    size: 10Gi
+existingSecret: civicops-runtime
+# Database, provider and identity secrets belong in existingSecret, never config or values files.
+config:
+  CIVICOPS_DEMO_MODE: "false"
+  CIVICOPS_EMAIL_MODE: outbox
+  CIVICOPS_TELEMETRY: "off"
+  CIVICOPS_TRUSTED_PROXY_NETWORKS: ""
+  AllowedHosts: localhost
+resources:
+  requests: {cpu: 250m, memory: 256Mi}
+  limits: {cpu: "2", memory: 1Gi}
+terminationGracePeriodSeconds: 35
+service:
+  port: 80
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  host: civicops.example.invalid
+  tlsSecretName: civicops-tls
+pdb:
+  enabled: true
+  minAvailable: 1
+# Scale-out is rejected until cross-node SSE, sessions and quota coordination are implemented.
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 70
+migration:
+  enabled: true
+  existingSecret: "" # Optional dedicated DDL role; otherwise existingSecret.
+  activeDeadlineSeconds: 120
+networkPolicy:
+  enabled: true
+  ingressNamespaceLabels: {kubernetes.io/metadata.name: ingress-nginx}
+  databaseNamespaceLabels: {kubernetes.io/metadata.name: civicops}
+  databasePodLabels: {app.kubernetes.io/name: postgres}
+  databaseCIDRs: [] # Managed database CIDRs, if not an in-cluster PostgreSQL pod.
+  httpsEgressCIDRs: [] # Explicit owner-reviewed provider/model-download address ranges.
+  telemetryNamespaceLabels: {kubernetes.io/metadata.name: observability}
+  telemetryPodLabels: {app.kubernetes.io/name: otel-collector}
+serviceMonitor:
+  enabled: false
+  labels: {}
+  collectorServiceLabels: {app.kubernetes.io/name: otel-collector}
+  collectorNamespace: observability
+  port: prometheus
+  interval: 30s
+vllm:
+  enabled: false
+  image: vllm/vllm-openai-rocm@sha256:749f6f3f944f12af49966ac523c1f8573e4b229594b541954bd5f879b4496b1f
+  model: Qwen/Qwen3-8B
+  tensorParallelSize: 1
+  gpuCount: 1
+  maxModelLength: 8192
+  existingSecret: civicops-vllm
+  nodeSelector: {civicops.amd.com/accelerator: mi300x}
+  tolerations: []
+  # Existing model cache provisioned on the AMD host/cluster; no hostPath or credentials included.
+  modelCacheClaim: civicops-model-cache
+  supplementalGroups: [] # Owner sets actual host video/render group IDs if needed.
+  resources:
+    requests: {cpu: "4", memory: 16Gi}
+    limits: {cpu: "8", memory: 32Gi}

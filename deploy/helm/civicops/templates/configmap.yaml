@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "civicops.fullname" . }}
+  labels:
+    {{- include "civicops.labels" . | nindent 4 }}
+data:
+  ASPNETCORE_HTTP_PORTS: "8080"
+  ASPNETCORE_ENVIRONMENT: Production
+  CIVICOPS_STORAGE: {{ .Values.storage.mode | quote }}
+  CIVICOPS_DATA_DIR: /app/Data
+  {{- if .Values.vllm.enabled }}
+  CIVICOPS_LLM_BASE_URL: {{ printf "http://%s-vllm:8000" .Release.Name | quote }}
+  {{- end }}
+  {{- range $key, $value := .Values.config }}
+  {{- if not (and $.Values.vllm.enabled (eq $key "CIVICOPS_LLM_BASE_URL")) }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}

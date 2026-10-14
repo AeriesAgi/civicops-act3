@@ -1,0 +1,12 @@
+{
+  "id": "./",
+  "name": "CivicOps Crew",
+  "short_name": "Crew",
+  "description": "Municipal crew jobs, offline work evidence and explicit on-shift consent.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c1721",
+  "theme_color": "#101e2c",
+  "icons": [{"src":"/crew/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"/crew/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]
+}

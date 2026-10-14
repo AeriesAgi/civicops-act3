@@ -1,0 +1,76 @@
+# Round 7 — deployment, bounded load, accessibility, languages and OpenAPI
+
+Implemented locally on `grok/civicops-finish`, 8 October 2026. All data is synthetic. No push, remote/PR/merge/rebase/amend, Docker execution, signup, or live ElevenLabs/Zendesk/SMTP/identity-provider/LLM write was performed. The zero-configuration demo and existing visual assets are retained. Deployment validation establishes the properties of the assets, not a running production municipality.
+
+## Mandatory baseline
+
+Read the run01–06 handovers, `ROUND2_STATUS.md`, `ROUND6_STATUS.md` and README before editing. The initial `/workspace/civicops/verify.sh` at `ad35475` was all green: Release build **0 warnings/errors**, **960 tests**, **91 browser checks**, lifecycle and E2E (**10 verified audit entries**), both gitleaks scans, and clean Git status. No baseline repair was required. Final committed-head verification follows this handover; the completion report records that head and every gate result.
+
+## Delivery and boundaries
+
+| Requested item | Implemented and tested locally | Documented-only or owner-pending |
+|---|---|---|
+| 1. Production container | SDK **10.0.401-noble** to ASP.NET **10.0.12-noble-chiseled-extra**, both digest-pinned; UID/GID **1654**, read-only-compatible data/temp mounts, `.dockerignore`, no runtime shell/curl. A package-free .NET health helper checks loopback readiness, rejects redirects/non-loopback targets and has a bounded timeout. Hadolint and **5 actual helper checks** pass. Existing vLLM assets remain. | Docker daemon unavailable: no image build/run, registry publication or runtime filesystem attestation. |
+| 2. Compose | `deploy/compose/docker-compose.yml`: app plus PostgreSQL **17.11**, private env-file configuration, SCRAM, loopback app publication, health/dependency checks, read-only/non-root app, optional OTLP collector and `amd-vllm` profiles. ROCm profile maps `/dev/kfd` and `/dev/dri` and uses a pinned ROCm image. Semantic/YAML/security checks pass. | Owner supplies private configuration, durable mounts, image build and trusted HTTPS ingress. No PostgreSQL/model host ports are published by this production composition. The original demo run remains available. |
+| 3. Kubernetes | Helm chart has Deployment/probes/resources/security contexts, Service, TLS Ingress, ConfigMap, Secret references, PDB, guarded HPA, NetworkPolicy and migration pre-install/pre-upgrade Job. Migration hook has its own earlier egress policy and cannot override guarded storage/root/port settings through Secret keys. Optional collector ServiceMonitor targets the collector's Prometheus endpoint. MI300X values request `amd.com/gpu`. **3 Helm lints**, **4 strict kubeconform renders**, **8 unsafe configuration rejections** pass; static checks are in CI. | ExternalSecrets integration is described, not installed. Cluster execution, TLS/certificate/controller/device-plugin/Secret provisioning and remote CI are pending. |
+| 4. Scaling / AMD | File mode's existing exclusive process lock is retained. For both stores, Helm rejects replica/HPA values above one and uses Recreate because sessions, quotas and SSE remain local. PostgreSQL hosted outbox workers use per-schema session advisory leadership and retain per-item claims as a delivery fence; disconnect/release permits takeover. Single-node SSE filtering/refresh/drop/cleanup and worker leadership are tested. Deployment guide covers staged blue/green cutover, expand/contract migrations and rollback. AMD guide covers MI300X/ROCm, model/licence choice, tensor parallel, private authenticated endpoints, the existing benchmark script and cost collection. | The app is **not fully stateless**. Helm guards do not prevent manual scaling or another active release: the owner must preserve one active app. LISTEN/NOTIFY fan-out, shared sessions/quotas, replicas above one, overlapping rolling upgrades and HA require further engineering. Recreate and staged cutover may interrupt service. Actual AMD hardware/cloud setup, downloaded model weights, performance, accuracy and cost measurements remain unverified. |
+| 5. Load | Four k6 scenarios use synthetic intake/retries, authenticated dispatcher queue/metrics, scoped training completions and three actual Chromium EventSources. Release demo runs cover file and disposable PostgreSQL, max **5 API / 3 browser VUs**, **49s maximum configured scenario time per backend**. All **8 threshold sets / 696 checks** pass, zero API HTTP failures, **202 valid audit entries per backend**. N+1 historical projection commands and repeated contact-snapshot authentication were removed without weakening audit/transaction invariants. | Shared **8-core / 15 GiB** VM, no GPU; short loopback evidence is not municipal capacity or an SLO. Five-VU PostgreSQL intake missed the unchanged 2.5s threshold even after fixes; the committed modest profile uses three intake VUs. No causal performance improvement is claimed. Complete snapshots/global write locking and production-size datasets need further work. |
+| 6. WCAG 2.2 AA | Resident/control/admin: keyboard/focus/targets/live status, reduced motion, light/dark contrast and narrow reflow controls. Browser smoke now has **158 checks**, **14 axe scans**, **0 A/AA violations**, including expanded admin and af/zu at 320 CSS px. Supplemental contrast samples are at least **5.48:1**. QA-only axe **4.11.0** is outside runtime. Manual checklist and known gaps are documented. | Automated results are not a conformance certificate. Screen-reader combinations, actual text-only zoom, independent assessment and configured third-party SSO/voice surfaces remain manual owner validation. |
+| 7. i18n | Packaged en/af/zu resources have **123 matching resident keys** per language; staff has **362 English keys** ready. Switcher updates `lang` and chosen language; exact translated notice/consent, validation, deterministic resident status/communications and simulated chat use it. **24 new localization tests** pass; focused AI/ElevenLabs/privacy regression: **209 passed**. Existing live ElevenLabs en/af presets align; unsupported live zu keeps the form available without fetching private session credentials. Simulated en/af/zu chat remains available in demo/unconfigured mode. | af/zu are machine-drafted: native-speaker and Information Officer review is required before production. Live isiZulu voice and actual language/provider quality are pending. Catalogue/staff-entered/provider text is not automatically translated. |
+| 8. OpenAPI | Generated `/openapi.json`: **77 paths / 85 operations / 102 schemas**, all mapped endpoints, request/success/error schemas, synthetic examples, OIDC/cookie/bearer/tool/webhook security, SSE/binary/redirect/ETag contracts. Committed `docs/api/openapi.json` has route-coverage and deterministic snapshot tests; examples are submitted through real synthetic intake/Open311. **11 OpenAPI tests** pass. Audited pinned Spectral: **0 findings**, tools-only npm **0 vulnerabilities**. CI runs it. | OIDC discovery URL is a documented configuration placeholder. These local contracts do not validate a configured municipal issuer or live provider endpoint. |
+
+Deployment forwarding trusts at most 16 explicitly configured IP/CIDR proxies, one symmetric forwarded-for/proto hop, and never forwarded Host. Default trusts none; unrestricted/mapped-unrestricted networks fail validation. **25 new proxy/identity boundary cases** pass. Data protection is explicitly ephemeral, matching the existing memory-only staff sessions; restart expires sessions and in-progress OIDC/CSRF handshakes. Production deployments require deliberate ingress trust configuration.
+
+Final review found that pooled outbox leadership could occupy the only connection when an accepted PostgreSQL configuration set `Maximum Pool Size=1`. Leadership now uses an explicitly named unpooled/nonmultiplexed data source; municipal state also disables configured multiplexing. Security, schema, timeouts and safe tracing names are retained. Each active leadership attempt requires one extra physical database connection outside the application pool. The regression holds leadership while performing actual state transactions/readiness with a one-slot pool and both configured multiplexing settings: **5 default / 8 PostgreSQL scaling cases** pass, adding **2 / 4 cases** to the complete suites.
+
+## Local verification commands and evidence
+
+```bash
+export PATH=$HOME/.dotnet:$HOME/.local/bin:$PATH
+export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 TMPDIR=/workspace/civicops/tmp
+export DOTNET_PROCESSOR_COUNT=2
+export CIVICOPS_PLAYWRIGHT_MODULE=/workspace/civicops/tmp/browser-tools/node_modules/playwright-core/index.mjs
+```
+
+Build/application processor cap is two on the shared box. Disposable PostgreSQL uses the current user, a random high loopback port, private socket, 32 MB shared buffers and 30 connections; it is torn down by the wrapper. No system database is used.
+
+| Exact command | Observed result |
+|---|---|
+| `dotnet build -c Release` | **0 warnings / 0 errors**; final harness also rebuilds with `--no-incremental` |
+| `dotnet test -c Release --no-build` | Final clean committed-head default gate is run by `/workspace/civicops/verify.sh` after this handover; completion report records its outcome. Final default discovery contains **1,024 cases**; saved test-name comparison has **zero missing names**. |
+| `./scripts/with_ephemeral_pg.sh dotnet test -c Release --no-build --logger 'trx;LogFileName=round7-postgres-verified.trx' --results-directory "$TMPDIR/test-results/round7-postgres-verified"` | **1,086 passed / 0 failed / 0 skipped**, **7m57s**; up from the **1,019** baseline, with the final leadership and fixture fixes included |
+| `./scripts/smoke_lifecycle.sh` | Passed: consented intake, dispatch/lifecycle and Open311 |
+| `./scripts/smoke_e2e.sh` | Passed: **10 audit entries verified** |
+| `./scripts/smoke_browser.sh` | **158 checks**, **14 axe scans / 0 A/AA violations**, no CSP/runtime errors |
+| `./scripts/smoke_security_privacy.sh` | **25 checks** passed |
+| `./scripts/smoke_widget_csp.sh` | **8 checks**, no CSP/runtime violations or provider requests |
+| `./scripts/smoke_restore.sh` | **18 file / 21 PostgreSQL checks**, each restores **2 cases / 12 verified audit entries** |
+| `python3 -m unittest discover -s scripts -p test_backup_restore.py` | **15 passed** |
+| `./scripts/smoke_audit_export.sh` | **3 signed exports / 4 events each** verified; truncation rejected |
+| `./scripts/smoke_telemetry.sh` | Actual loopback OTLP traces, metrics and logs; correlation/redaction checks passed |
+| `./scripts/with_ephemeral_pg.sh ./scripts/smoke_telemetry.sh postgres` | Native Npgsql traces/metrics plus all three OTLP signals and sentinel redaction passed |
+| `./scripts/validate_deployment.sh` | Hadolint clean; **3 Helm lints**; Kubernetes 1.34 strict renders **7 / 6 / 10 / 10 valid resources**, **0 invalid/errors/skipped**; **8 unsafe configurations rejected**; Compose semantics; **5 helper checks** |
+| `./scripts/lint_openapi.sh --install` | Spectral **77 paths / 85 operations / 0 findings**; tooling npm audit **0 vulnerabilities** |
+| `CIVICOPS_LOADTEST_RESULTS="$TMPDIR/round7-load-leader-final" ./scripts/loadtest.sh all` | **8 scenario threshold sets / 696 checks passed**, API failure rate zero; file intake p95 **558.95ms**, PostgreSQL **1,453.23ms**; **202 valid audit entries each** |
+| `./scripts/security_dependencies.sh`; `dotnet list package --vulnerable --include-transitive` | **2 projects / 0 vulnerable direct or transitive packages**; **0 repository npm manifests** |
+| `$TMPDIR/bin/actionlint -color=false .github/workflows/*.yml` | **3 workflows** clean |
+| CI source checks: individual `bash -n`, Python AST, `node --check` and k6 `node --input-type=module --check` | **23 shell / 7 Python / 7 app-tool JavaScript / 5 k6 files** parsed; k6 modules were not executed by Node |
+| `git diff --check`; `gitleaks detect --source . --log-opts="--all" --redact`; `gitleaks dir . --redact`; `git status --short`; `/workspace/civicops/verify.sh` | Final committed-head gate follows this handover; completion report records both scans, clean status and every result. |
+
+The baseline cases and assertions are retained. The initial full default run passed **1,021 / 1,022**: its script-nonce attribute-order regression was corrected in production HTML, without changing the existing test, which then passed unchanged. A PostgreSQL rerun passed **1,085 / 1,086**, exposing a sequential workforce fixture racing the hosted delivery worker's legitimate case-version change; the two override fixtures now explicitly own delivery scheduling, retaining all assertions and production conflict handling. The complete workforce class then passed **48 default / 53 PostgreSQL cases**. Final default and PostgreSQL execution counts must not fall below **960 / 1,019**. Detailed load timings, failed explorations and raw artifact paths are in [LOAD_TEST_RESULTS.md](operations/LOAD_TEST_RESULTS.md); accessibility limitations are in [ACCESSIBILITY.md](ACCESSIBILITY.md). Temporary artifacts and screenshots are outside Git. Repository `scripts/verify.sh` now includes the new deployment, Spectral and load gates; CI adds deployment/API checks and axe (remote execution is pending).
+
+## New environment inventory
+
+Both example files now contain **128 unique blank placeholders**, with **13 new settings**:
+
+- Runtime/host: `CIVICOPS_TRUSTED_PROXY_NETWORKS`, standard ASP.NET `AllowedHosts`.
+- Compose: `CIVICOPS_COMPOSE_ENV_FILE`, `CIVICOPS_APP_IMAGE`, `CIVICOPS_COMPOSE_HTTP_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`.
+- Verification: `CIVICOPS_AXE_CORE_PATH`, `CIVICOPS_SPECTRAL_TOOLS_DIR`, `CIVICOPS_LOADTEST_RESULTS`, `CIVICOPS_LOADTEST_BASE_URL`, `CIVICOPS_LOADTEST_SUMMARY`. The last two are harness-owned selectors, not application configuration.
+
+No filled `.env`, credentials, real PII or real tokens are committed. Language resources add no runtime setting. Existing `CIVICOPS_VLLM_*`, database/secret and `OTEL_*` configuration remains documented in the operations guides. Unconfigured providers remain simulated or honestly disabled.
+
+## Remaining release work
+
+The deployment/AMD guides describe steps that have not run on actual Docker/Kubernetes/AMD hardware. The chart deliberately rejects unsafe scale-out rather than implying distributed readiness. Shared SSE/session/quota infrastructure, overlapping upgrades, narrower storage locks and production workload evidence require engineering before HA operation. Blue/green instructions currently describe a staged single-active cutover with interruption risk.
+
+Owner work includes managed database/TLS/backups/PITR, restore/key custody and external audit anchoring, Secret/ingress/device-plugin/collector setup, native translations/approved notices, manual assistive technology and independent accessibility/security review, real municipal SSO/providers, privacy lawful basis/Information Officer/complete-erasure limits, production capacity/SLO evidence and actual AMD measurements. Hackathon eligibility/publication/video/pitch assets and remote CI remain pending. No local result attests production municipal certification or a measured AMD advantage.

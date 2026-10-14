@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/training-certification-response.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "grant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+        },
+        "record": {
+          "$ref": "training-certification.schema.json"
+        },
+        "certification": {
+          "$ref": "worker-certification.schema.json"
+        },
+        "client": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+        },
+        "recordedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "record",
+        "certification",
+        "client",
+        "recordedAt"
+      ]
+    },
+    "replayed": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "grant",
+    "replayed"
+  ]
+}

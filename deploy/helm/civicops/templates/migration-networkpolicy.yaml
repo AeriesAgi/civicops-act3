@@ -1,0 +1,40 @@
+{{- if and .Values.migration.enabled (eq .Values.storage.mode "postgres") .Values.networkPolicy.enabled }}
+# Pre-install hooks run before ordinary chart resources; permit the DDL Job in default-deny namespaces.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "civicops.fullname" . }}-migration
+  labels:
+    {{- include "civicops.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-10"
+    # hook-succeeded would delete this policy immediately, before the following Job starts.
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "civicops.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      civicops.io/component: migration
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+          podSelector:
+            matchLabels: {k8s-app: kube-dns}
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.databaseNamespaceLabels | nindent 14 }}
+          podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.databasePodLabels | nindent 14 }}
+        {{- range .Values.networkPolicy.databaseCIDRs }}
+        - ipBlock: {cidr: {{ . | quote }}}
+        {{- end }}
+      ports: [{protocol: TCP, port: 5432}]
+{{- end }}

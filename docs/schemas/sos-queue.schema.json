@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/sos-queue.schema.json",
+  "title": "Control-room SOS queue",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["alerts", "generatedAt", "unacknowledged", "escalationTargetSeconds"],
+  "properties": {
+    "alerts": {"type": "array", "items": {"$ref": "sos-alert.schema.json"}},
+    "generatedAt": {"type": "string", "format": "date-time"},
+    "unacknowledged": {"type": "integer", "minimum": 0},
+    "escalationTargetSeconds": {"type": "integer", "minimum": 10, "maximum": 3600}
+  },
+  "description": "Queue is tenant-scoped and read by authorised control-room staff."
+}

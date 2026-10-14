@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "civicops.fullname" . }}
+  labels:
+    {{- include "civicops.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  # Refuse overlapping app instances while SSE, identity sessions and quotas are local.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "civicops.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "civicops.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- include "civicops.securityContext" . | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: civicops
+          image: {{ include "civicops.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- include "civicops.containerSecurityContext" . | nindent 12 }}
+          envFrom:
+            {{- include "civicops.envFrom" . | nindent 12 }}
+          # Fixed chart invariants take precedence over ConfigMap/Secret envFrom.
+          env:
+            - {name: CIVICOPS_STORAGE, value: {{ .Values.storage.mode | quote }}}
+            - {name: CIVICOPS_DATA_DIR, value: /app/Data}
+            - {name: ASPNETCORE_HTTP_PORTS, value: "8080"}
+            - {name: ASPNETCORE_ENVIRONMENT, value: Production}
+          ports:
+            - {name: http, containerPort: 8080}
+          startupProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 2
+            failureThreshold: 60
+          livenessProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: {path: /health/ready, port: http}
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - {name: data, mountPath: /app/Data}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: data
+          {{- if .Values.storage.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ default (include "civicops.fullname" .) .Values.storage.persistence.existingClaim }}
+          {{- else }}
+          emptyDir: {sizeLimit: 64Mi}
+          {{- end }}
+        - name: tmp
+          emptyDir: {medium: Memory, sizeLimit: 64Mi}

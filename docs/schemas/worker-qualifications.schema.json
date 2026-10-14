@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/worker-qualifications.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "workerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "crewId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*(\\.[A-Z][A-Z0-9_]*)+$",
+            "maxLength": 80
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          }
+        },
+        "required": [
+          "code",
+          "level"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 500
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "$ref": "worker-certification.schema.json"
+      },
+      "minItems": 0,
+      "maxItems": 500
+    },
+    "trainingCompletions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+          },
+          "record": {
+            "$ref": "training-completion.schema.json"
+          },
+          "client": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "record",
+          "client",
+          "recordedAt"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 100000
+    },
+    "synthetic": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "required": [
+    "workerId",
+    "displayName",
+    "crewId",
+    "skills",
+    "certifications",
+    "trainingCompletions",
+    "synthetic"
+  ]
+}

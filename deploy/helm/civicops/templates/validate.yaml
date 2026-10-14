@@ -1,0 +1,29 @@
+{{- if ne (int .Values.replicaCount) 1 -}}
+{{ fail "CivicOps permits one active app replica: SSE, sessions and quotas are instance-local; shared PostgreSQL does not remove this limit." }}
+{{- end -}}
+{{- if or (ne (int .Values.autoscaling.minReplicas) 1) (ne (int .Values.autoscaling.maxReplicas) 1) -}}
+{{ fail "CivicOps HPA must remain at one replica until distributed SSE, sessions and quotas are implemented." }}
+{{- end -}}
+{{- if not (has .Values.storage.mode (list "file" "postgres")) -}}
+{{ fail "storage.mode must be file or postgres." }}
+{{- end -}}
+{{- if and (eq .Values.storage.mode "file") (not .Values.storage.persistence.enabled) -}}
+{{ fail "File storage requires a persistent volume and Recreate deployment; ephemeral file stores are refused." }}
+{{- end -}}
+{{- if and (eq .Values.storage.mode "postgres") (empty .Values.existingSecret) -}}
+{{ fail "PostgreSQL requires existingSecret with CIVICOPS_DATABASE_URL; the chart never embeds credentials." }}
+{{- end -}}
+{{- if and .Values.ingress.enabled (empty .Values.config.CIVICOPS_TRUSTED_PROXY_NETWORKS) -}}
+{{ fail "TLS ingress requires explicit CIVICOPS_TRUSTED_PROXY_NETWORKS for the ingress proxy IPs/CIDRs." }}
+{{- end -}}
+{{- if and .Values.ingress.enabled (or (empty .Values.ingress.host) (empty .Values.ingress.tlsSecretName)) -}}
+{{ fail "Ingress requires host and a TLS Secret reference." }}
+{{- end -}}
+{{- if and .Values.vllm.enabled (or (empty .Values.vllm.existingSecret) (empty .Values.vllm.modelCacheClaim) (ne (int .Values.vllm.tensorParallelSize) (int .Values.vllm.gpuCount))) -}}
+{{ fail "AMD vLLM requires Secret/model cache references and tensorParallelSize matching gpuCount." }}
+{{- end -}}
+{{- range $key := list "CIVICOPS_STORAGE" "CIVICOPS_DATA_DIR" "ASPNETCORE_HTTP_PORTS" "ASPNETCORE_ENVIRONMENT" -}}
+{{- if hasKey $.Values.config $key -}}
+{{ fail (printf "config.%s is reserved; use the chart's storage/deployment settings instead." $key) }}
+{{- end -}}
+{{- end -}}

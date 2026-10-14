@@ -1,0 +1,7 @@
+root = true
+
+[tests/**/*.cs]
+# Test fixtures intentionally allocate independent arrays/options per scenario.
+# These two performance suggestions do not affect validation or security checks.
+dotnet_diagnostic.CA1861.severity = none
+dotnet_diagnostic.CA1869.severity = none

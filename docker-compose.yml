@@ -1,0 +1,115 @@
+services:
+  civicops:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:5080:8080"
+    environment:
+      # Explicit synthetic demonstration. Set false with named dispatcher hashes for a protected runtime.
+      CIVICOPS_DEMO_MODE: "${CIVICOPS_DEMO_MODE:-true}"
+      CIVICOPS_DATA_DIR: /app/Data
+      # PostgreSQL and signed export are opt-in; mounted paths refer to the container filesystem.
+      CIVICOPS_STORAGE: "${CIVICOPS_STORAGE:-file}"
+      CIVICOPS_DATABASE_URL: "${CIVICOPS_DATABASE_URL:-}"
+      CIVICOPS_DATABASE_URL_FILE: "${CIVICOPS_DATABASE_URL_FILE:-}"
+      CIVICOPS_SECRET_PROVIDER: "${CIVICOPS_SECRET_PROVIDER:-env}"
+      CIVICOPS_AUDIT_SIGNING_KEY: "${CIVICOPS_AUDIT_SIGNING_KEY:-}"
+      CIVICOPS_AUDIT_SIGNING_KEY_FILE: "${CIVICOPS_AUDIT_SIGNING_KEY_FILE:-}"
+      CIVICOPS_AUDIT_SIGNING_KEY_ID: "${CIVICOPS_AUDIT_SIGNING_KEY_ID:-owner-key}"
+      CIVICOPS_AUDIT_EXPORT_DIR: "${CIVICOPS_AUDIT_EXPORT_DIR:-}"
+      CIVICOPS_PROVIDER_TIMEOUT_MS: "${CIVICOPS_PROVIDER_TIMEOUT_MS:-5000}"
+      CIVICOPS_OUTBOX_READY_MAX: "${CIVICOPS_OUTBOX_READY_MAX:-1000}"
+      # Demo suppresses external OTLP; blank telemetry selects the application's safe defaults.
+      CIVICOPS_TELEMETRY: "${CIVICOPS_TELEMETRY:-}"
+      OTEL_SERVICE_NAME: "${OTEL_SERVICE_NAME:-civicops}"
+      OTEL_SERVICE_VERSION: "${OTEL_SERVICE_VERSION:-}"
+      OTEL_RESOURCE_ATTRIBUTES: "${OTEL_RESOURCE_ATTRIBUTES:-}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}"
+      OTEL_EXPORTER_OTLP_HEADERS: "${OTEL_EXPORTER_OTLP_HEADERS:-}"
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}"
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:-}"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "${OTEL_EXPORTER_OTLP_LOGS_ENDPOINT:-}"
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED:-false}"
+      CIVICOPS_EMAIL_MODE: "${CIVICOPS_EMAIL_MODE:-outbox}"
+      CIVICOPS_DISPATCHERS: "${CIVICOPS_DISPATCHERS:-}"
+      CIVICOPS_DISPATCH_TOKEN: "${CIVICOPS_DISPATCH_TOKEN:-}"
+      CIVICOPS_INTAKE_LIMIT: "${CIVICOPS_INTAKE_LIMIT:-60}"
+      CIVICOPS_DISPATCH_LIMIT: "${CIVICOPS_DISPATCH_LIMIT:-120}"
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-}"
+      CIVICOPS_LLM_BASE_URL: "${CIVICOPS_LLM_BASE_URL:-}"
+      CIVICOPS_LLM_PUBLIC_URL: "${CIVICOPS_LLM_PUBLIC_URL:-}"
+      CIVICOPS_LLM_MODEL: "${CIVICOPS_LLM_MODEL:-Qwen/Qwen3-8B}"
+      CIVICOPS_LLM_PROVIDER_LABEL: "${CIVICOPS_LLM_PROVIDER_LABEL:-OpenAI-compatible endpoint; hardware unverified}"
+      CIVICOPS_LLM_TIMEOUT_MS: "${CIVICOPS_LLM_TIMEOUT_MS:-10000}"
+      CIVICOPS_LLM_API_KEY: "${CIVICOPS_LLM_API_KEY:-}"
+      ELEVENLABS_API_KEY: "${ELEVENLABS_API_KEY:-}"
+      ELEVENLABS_API_BASE: "${ELEVENLABS_API_BASE:-https://api.elevenlabs.io}"
+      ELEVENLABS_AGENT_ID: "${ELEVENLABS_AGENT_ID:-}"
+      ELEVENLABS_CALLBACK_AGENT_ID: "${ELEVENLABS_CALLBACK_AGENT_ID:-}"
+      ELEVENLABS_AGENT_PHONE_NUMBER_ID: "${ELEVENLABS_AGENT_PHONE_NUMBER_ID:-}"
+      ELEVENLABS_PHONE_PROVIDER: "${ELEVENLABS_PHONE_PROVIDER:-twilio}"
+      ELEVENLABS_SESSION_MODE: "${ELEVENLABS_SESSION_MODE:-public}"
+      CIVICOPS_ELEVENLABS_TOOL_SECRET: "${CIVICOPS_ELEVENLABS_TOOL_SECRET:-}"
+      ELEVENLABS_WEBHOOK_SECRET: "${ELEVENLABS_WEBHOOK_SECRET:-}"
+      ELEVENLABS_WORKSPACE_TOOL_SECRET_ID: "${ELEVENLABS_WORKSPACE_TOOL_SECRET_ID:-}"
+      ELEVENLABS_WORKSPACE_LLM_SECRET_ID: "${ELEVENLABS_WORKSPACE_LLM_SECRET_ID:-}"
+      ELEVENLABS_VOICE_ID: "${ELEVENLABS_VOICE_ID:-}"
+      ELEVENLABS_WIDGET_ALLOWED_HOSTS: "${ELEVENLABS_WIDGET_ALLOWED_HOSTS:-}"
+      ELEVENLABS_TRANSFER_PHONE: "${ELEVENLABS_TRANSFER_PHONE:-}"
+      ZENDESK_SUBDOMAIN: "${ZENDESK_SUBDOMAIN:-}"
+      ZENDESK_EMAIL: "${ZENDESK_EMAIL:-}"
+      ZENDESK_API_TOKEN: "${ZENDESK_API_TOKEN:-}"
+      ZENDESK_OAUTH_TOKEN: "${ZENDESK_OAUTH_TOKEN:-}"
+      ZENDESK_WEBHOOK_SECRET: "${ZENDESK_WEBHOOK_SECRET:-}"
+      CIVICOPS_EMAIL_FROM: "${CIVICOPS_EMAIL_FROM:-civicops@example.invalid}"
+      CIVICOPS_EMAIL_NOTIFY_TO: "${CIVICOPS_EMAIL_NOTIFY_TO:-}"
+      CIVICOPS_EMAIL_SMTP_HOST: "${CIVICOPS_EMAIL_SMTP_HOST:-}"
+      CIVICOPS_EMAIL_SMTP_PORT: "${CIVICOPS_EMAIL_SMTP_PORT:-587}"
+      CIVICOPS_EMAIL_SMTP_USER: "${CIVICOPS_EMAIL_SMTP_USER:-}"
+      CIVICOPS_EMAIL_SMTP_PASSWORD: "${CIVICOPS_EMAIL_SMTP_PASSWORD:-}"
+      CIVICOPS_EMAIL_USE_SSL: "${CIVICOPS_EMAIL_USE_SSL:-true}"
+    volumes:
+      - civicops-data:/app/Data
+    read_only: true
+    tmpfs:
+      - /tmp:uid=1654,gid=1654,mode=1770
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+  amd-vllm:
+    profiles: [amd-vllm]
+    image: "${CIVICOPS_VLLM_IMAGE:-vllm/vllm-openai-rocm:latest}"
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add: [video]
+    ipc: host
+    ports:
+      - "127.0.0.1:${CIVICOPS_VLLM_PORT:-8000}:8000"
+    environment:
+      VLLM_NO_USAGE_STATS: "1"
+      VLLM_API_KEY: "${CIVICOPS_LLM_API_KEY:-}"
+    volumes:
+      - civicops-model-cache:/root/.cache/huggingface
+    command:
+      - --model
+      - "${CIVICOPS_LLM_MODEL:-Qwen/Qwen3-8B}"
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --dtype
+      - auto
+      - --max-model-len
+      - "8192"
+      - --gpu-memory-utilization
+      - "0.85"
+      - --tensor-parallel-size
+      - "${CIVICOPS_VLLM_TENSOR_PARALLEL:-1}"
+
+volumes:
+  civicops-data:
+  civicops-model-cache:

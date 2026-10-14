@@ -1,0 +1,93 @@
+{
+  "tool_config": {
+    "type": "webhook",
+    "name": "report_incident",
+    "description": "Record one municipal service issue for human review. Never approves or dispatches. Read the returned reference number back exactly.",
+    "response_timeout_secs": 20,
+    "api_schema": {
+      "url": "{{PUBLIC_BASE_URL}}/api/channels/elevenlabs/tools/report_incident",
+      "method": "POST",
+      "request_headers": {
+        "Authorization": {
+          "secret_id": "{{ELEVENLABS_WORKSPACE_TOOL_SECRET_ID}}"
+        },
+        "X-CivicOps-Conversation-Id": {
+          "variable_name": "system__conversation_id"
+        }
+      },
+      "request_body_schema": {
+        "type": "object",
+        "properties": {
+          "conversation_id": {
+            "type": "string",
+            "dynamic_variable": "system__conversation_id"
+          },
+          "caller_id": {
+            "type": "string",
+            "dynamic_variable": "system__caller_id"
+          },
+          "turn_id": {
+            "type": "string",
+            "description": "A stable request identifier for this logical tool operation. Reuse it unchanged if retrying. Do not reuse it for different information."
+          },
+          "description": {
+            "type": "string",
+            "description": "What happened, in the resident own words, 10 to 4000 characters."
+          },
+          "area": {
+            "type": "string",
+            "description": "Area, landmark or street supplied by the resident; at most 200 characters. Never infer a verified location."
+          },
+          "language": {
+            "type": "string",
+            "description": "Resident language code: en or af."
+          },
+          "channel": {
+            "type": "string",
+            "description": "phone for a telephone call; chat for widget or text chat."
+          },
+          "contact_preference": {
+            "type": "string",
+            "description": "none, email, or voice as explicitly selected by resident."
+          },
+          "contact_email": {
+            "type": "string",
+            "description": "Optional resident email only after consent. Do not require contact details."
+          },
+          "contact_phone": {
+            "type": "string",
+            "description": "Optional callback phone only after consent. Never take system caller ID as consent."
+          },
+          "consent_to_contact": {
+            "type": "boolean",
+            "description": "True only after explicit resident consent to contact."
+          },
+          "callback_consent": {
+            "type": "boolean",
+            "description": "True only after explicit consent to an outbound voice callback."
+          },
+          "privacy_consent_accepted": {
+            "type": "boolean",
+            "description": "True only after the resident explicitly accepts municipal processing of this report to assess, route and manage the service issue. Read the purpose and ask first. Contact consent is separate."
+          },
+          "privacy_consent_version": {
+            "type": "string",
+            "description": "civicops-popia-v1 only after explicit acceptance of the current service-report privacy purpose."
+          }
+        },
+        "required": [
+          "conversation_id",
+          "turn_id",
+          "description",
+          "area",
+          "language",
+          "channel",
+          "consent_to_contact",
+          "callback_consent",
+          "privacy_consent_accepted",
+          "privacy_consent_version"
+        ]
+      }
+    }
+  }
+}

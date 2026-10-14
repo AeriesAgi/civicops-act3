@@ -1,0 +1,276 @@
+name: CivicOps build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    # Full storage/API coverage and all browser suites remain mandatory on small runners.
+    timeout-minutes: 35
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      CIVICOPS_UPDATE_MEDIA: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Runner temporary files
+        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Restore
+        run: dotnet restore CivicOps.sln
+      - name: Release build
+        run: dotnet build CivicOps.sln --configuration Release --no-restore
+      - name: Unit and integration tests
+        run: dotnet test CivicOps.sln --configuration Release --no-build --logger "trx;LogFileName=civicops.trx" --results-directory "$TMPDIR/test-results"
+      - name: JavaScript syntax and Python source checks
+        run: |
+          while IFS= read -r source; do node --check "$source"; done < <(rg --files products/civicops/wwwroot scripts -g '*.js' -g '*.mjs' -g '!**/vendor/**')
+          for source in loadtest/k6/*.js; do node --input-type=module --check < "$source"; done
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          for source in sorted(Path("scripts").glob("*.py")):
+              ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
+          PY
+          for source in deploy/amd/*.sh scripts/*.sh apps/android-crew/*.sh; do bash -n "$source"; done
+          sh -n apps/android-crew/gradlew
+      - name: Documentation links and blank configuration inventory
+        run: |
+          python3 scripts/check_docs.py
+          python3 -m unittest discover -s scripts -p test_check_docs.py
+      - name: Native channel relay authentication and loopback boundaries
+        run: python3 -B scripts/test_channel_relay.py
+      - name: Lifecycle smoke
+        run: ./scripts/smoke_lifecycle.sh
+      - name: Simulated channel-to-dispatch end-to-end smoke
+        run: ./scripts/smoke_e2e.sh
+      - name: Security and POPIA workflow smoke
+        run: ./scripts/smoke_security_privacy.sh
+      - name: File backup restore and signed audit export smoke
+        run: |
+          ./scripts/smoke_restore.sh file
+          ./scripts/smoke_audit_export.sh
+          ./scripts/smoke_telemetry.sh
+          python3 -m unittest discover -s scripts -p test_backup_restore.py
+      - name: Browser smoke when runner Chrome is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          chrome_path=$(command -v google-chrome || command -v chromium || true)
+          if [[ -z "$chrome_path" ]]; then
+            echo "Chrome is absent; browser smoke skipped cleanly."
+            exit 0
+          fi
+          npm install --prefix "$TMPDIR/browser-tools" --no-audit --no-fund --ignore-scripts playwright-core@1.64.0 axe-core@4.11.0
+          npm audit --prefix "$TMPDIR/browser-tools" --audit-level=low
+          export CIVICOPS_CHROME_PATH="$chrome_path"
+          export CIVICOPS_PLAYWRIGHT_MODULE="$TMPDIR/browser-tools/node_modules/playwright-core/index.mjs"
+          ./scripts/smoke_browser.sh
+          ./scripts/smoke_widget_csp.sh
+          ./scripts/smoke_map.sh
+          ./scripts/smoke_crew.sh
+          ./scripts/smoke_channels.sh
+          ./scripts/smoke_sos.sh
+          git diff --exit-code
+          test -z "$(git ls-files --others --exclude-standard)"
+      - name: Download checksum-verified gitleaks binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=8.30.1
+          scan_dir="$TMPDIR/gitleaks"
+          mkdir -p "$scan_dir"
+          curl --fail --silent --show-error --location --retry 2 --connect-timeout 10 --max-time 45 \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz" \
+            --output "$scan_dir/gitleaks_${version}_linux_x64.tar.gz"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $scan_dir/gitleaks_${version}_linux_x64.tar.gz" | sha256sum --check --strict
+          tar --extract --gzip --file "$scan_dir/gitleaks_${version}_linux_x64.tar.gz" --directory "$scan_dir" gitleaks
+          echo "$scan_dir" >> "$GITHUB_PATH"
+      - name: Secrets scan of all fetched history and working directory
+        run: |
+          gitleaks detect --source . --log-opts="--all" --redact
+          gitleaks dir . --redact
+      - name: Test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: civicops-test-results
+          path: ${{ runner.temp }}/test-results/*.trx
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Browser evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: civicops-browser-evidence
+          path: |
+            ${{ runner.temp }}/browser-smoke/
+            ${{ runner.temp }}/map-browser-smoke/
+            ${{ runner.temp }}/crew-browser-smoke/
+            ${{ runner.temp }}/sos-browser-smoke/
+          if-no-files-found: ignore
+          retention-days: 7
+  android-crew:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Pin Android SDK environment to the external toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_root="$RUNNER_TEMP/civicops-tools/android-sdk"
+          {
+            echo "ANDROID_HOME=$sdk_root"
+            echo "ANDROID_SDK_ROOT=$sdk_root"
+          } >> "$GITHUB_ENV"
+      - name: Pinned official Android toolchain outside the repository
+        shell: bash
+        run: ./apps/android-crew/install-toolchain.sh "$RUNNER_TEMP/civicops-tools"
+      - name: Native assembly lint and unit tests with two workers
+        shell: bash
+        run: ./apps/android-crew/build.sh "$RUNNER_TEMP/civicops-tools"
+      - name: Native test and lint evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: civicops-android-crew-checks
+          path: |
+            ${{ runner.temp }}/civicops-tools/gradle-cache/project-build/android-crew/app/test-results/testDebugUnitTest/
+            ${{ runner.temp }}/civicops-tools/gradle-cache/project-build/android-crew/app/reports/lint-results-debug.*
+          if-no-files-found: ignore
+          retention-days: 7
+  supply-chain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Runner temporary tools and evidence
+        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Restore advisory inventory
+        run: dotnet restore CivicOps.sln
+      - name: Fail on vulnerable NuGet and npm dependencies
+        run: ./scripts/security_dependencies.sh
+      - name: Generate CycloneDX SBOM with pinned official CLI
+        run: ./scripts/sbom.sh "$RUNNER_TEMP/sbom.cdx.json"
+      - name: SBOM artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: civicops-sbom
+          path: ${{ runner.temp }}/sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 30
+
+  deployment-assets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+      DOTNET_PROCESSOR_COUNT: "2"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Temporary static-validation tools and evidence
+        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Dockerfile Compose Helm and strict Kubernetes validation
+        run: ./scripts/validate_deployment.sh
+      - name: OpenAPI structural lint
+        run: ./scripts/lint_openapi.sh --install
+      - name: Rendered deployment evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: civicops-deployment-validation
+          path: ${{ runner.temp }}/deployment-validation/
+          if-no-files-found: error
+          retention-days: 7
+
+  postgres-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_DB: civicops_test
+          POSTGRES_USER: civicops_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U civicops_test -d civicops_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+      CIVICOPS_TEST_DATABASE_URL: "Host=127.0.0.1;Port=5432;Database=civicops_test;Username=civicops_test;SSL Mode=Disable;Maximum Pool Size=5"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
+      - name: Runner temporary files
+        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Release build
+        run: dotnet build CivicOps.sln -c Release
+      - name: Full suite including shared file and PostgreSQL storage contracts
+        run: dotnet test CivicOps.sln -c Release --no-build --logger "trx;LogFileName=postgres-contracts.trx" --results-directory "$TMPDIR/test-results"
+      - name: Matching PostgreSQL 17 backup clients
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail --silent --show-error --location --connect-timeout 10 --max-time 45 https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client-17
+          echo "CIVICOPS_PG_BIN=/usr/lib/postgresql/17/bin" >> "$GITHUB_ENV"
+      - name: PostgreSQL backup restore safety and recovery drill
+        env:
+          CIVICOPS_STORAGE: postgres
+          CIVICOPS_DATABASE_URL: "Host=127.0.0.1;Port=5432;Database=civicops_test;Username=civicops_test;SSL Mode=Disable;Maximum Pool Size=5"
+          CIVICOPS_EPHEMERAL_PG: "1"
+          PGPORT: "5432"
+        run: |
+          ./scripts/smoke_restore.sh postgres
+          ./scripts/smoke_telemetry.sh postgres
+          python3 -m unittest discover -s scripts -p test_backup_restore.py
+      - name: PostgreSQL contract evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: civicops-postgres-contracts
+          path: ${{ runner.temp }}/test-results/*.trx
+          if-no-files-found: error
+          retention-days: 7

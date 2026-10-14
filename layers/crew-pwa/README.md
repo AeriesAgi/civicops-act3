@@ -1,0 +1,17 @@
+# CivicOps crew PWA
+
+The installable crew web app is shipped with the existing server at **`/crew/`**. Its source lives in [the crew web directory](../../products/civicops/wwwroot/crew/) so the one-command demo needs no frontend build, CDN, account or extra package. Open the app, sign in with a crew identity or a supervisor-issued pairing code, and install it through the browser menu when available. Municipality paths such as `/m/coast/crew/` have a separate manifest scope and offline shell.
+
+Jobs, filtering, hazards, PPE, certificates, procedure steps, crew status reports, notes and stripped photo evidence work with an IndexedDB outbox. Offline drafts retain stable operation IDs, bounded retry/backoff and explicit review for conflicts. The service worker caches public app files only. Jobs expire locally after 24 hours and unsent drafts after 7 days; sign-out, expired access or authorisation loss clears private local data. Device-pairing access is retained in tab-scoped `sessionStorage` until expiry, never in IndexedDB or the service worker, and the server verifies the worker identity before syncing. Closing the tab requires another sign-in. Credential changes invalidate all in-flight work before awaiting login, bind every draft/API/cache/photo operation to its original worker generation and partition, and discard stale callbacks. Offline paired restoration requires the cached worker and municipal path to match the tab grant.
+
+Location requires a live server-confirmed shift, explicit recorded consent and a separate **Start sharing in this page** action. The Geolocation watch stops on a hidden/closed page, offline state, consent withdrawal, shift end or maximum shift expiry. Resuming always requires an explicit action. A replacement shift or consent ID also stops the watch; uploads remain bound to the IDs acknowledged when the worker explicitly chose sharing. Crew authorization loss stops collection and clears private local state; a privacy-rejected location upload stops sharing and rechecks the current shift/consent without saving the location. Location pings are never queued. Offline withdrawal/end stops collection immediately and queues only the privacy stop for acknowledgement when connected; the server also expires every shift. The SOS screen calls an honest, location-free contract stub: **no emergency responders are notified**.
+
+The photo picker re-encodes JPEG/PNG/WebP input to JPEG on the device and removes all metadata, including GPS. The web fallback deliberately does not preserve GPS metadata for individual photos. Notes/photos include a purpose notice and guidance to avoid people, identity numbers and sensitive details. English labels are complete; partial Afrikaans/isiZulu labels fall back to English and require native-speaker review. Native Android/device, MDM, browser install, municipal privacy and manual assistive-technology acceptance remain owner-pending.
+
+Run the actual-browser smoke against its isolated synthetic server:
+
+```bash
+scripts/smoke_crew.sh
+```
+
+Set `CIVICOPS_UPDATE_MEDIA=1` to refresh the four phone captures and the supervisor map capture. The smoke checks the server privacy guards, real offline outbox, same-key replay, retry/conflict handling, consent/visibility state machine, worker history/export, supervisor pairing/revocation, municipal-path offline shell, accessibility and CSP without allowing external provider/tile requests. See [crew deployment and privacy guide](../../docs/CREW_APP.md) for the shared contract and municipal rollout limits.

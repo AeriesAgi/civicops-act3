@@ -1,0 +1,11 @@
+# Optional owner deployment on actual MI300X nodes; static validation is not hardware attestation.
+vllm:
+  enabled: true
+  tensorParallelSize: 1
+  gpuCount: 1
+  nodeSelector:
+    civicops.amd.com/accelerator: mi300x
+config:
+  CIVICOPS_LLM_BASE_URL: http://civicops-vllm:8000
+  CIVICOPS_LLM_MODEL: Qwen/Qwen3-8B
+  CIVICOPS_LLM_PROVIDER_LABEL: vLLM on AMD MI300X; hardware unverified until owner measurement

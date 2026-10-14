@@ -1,0 +1,51 @@
+{
+  "tool_config": {
+    "type": "webhook",
+    "name": "add_case_information",
+    "description": "Append information to the case created in this conversation. Never changes status, approves, assigns or merges.",
+    "response_timeout_secs": 20,
+    "api_schema": {
+      "url": "{{PUBLIC_BASE_URL}}/api/channels/elevenlabs/tools/add_case_information",
+      "method": "POST",
+      "request_headers": {
+        "Authorization": {
+          "secret_id": "{{ELEVENLABS_WORKSPACE_TOOL_SECRET_ID}}"
+        },
+        "X-CivicOps-Conversation-Id": {
+          "variable_name": "system__conversation_id"
+        }
+      },
+      "request_body_schema": {
+        "type": "object",
+        "properties": {
+          "conversation_id": {
+            "type": "string",
+            "dynamic_variable": "system__conversation_id"
+          },
+          "caller_id": {
+            "type": "string",
+            "dynamic_variable": "system__caller_id"
+          },
+          "turn_id": {
+            "type": "string",
+            "description": "A stable request identifier for this logical tool operation. Reuse it unchanged if retrying. Do not reuse it for different information."
+          },
+          "reference_number": {
+            "type": "string",
+            "description": "Case reference returned by report_incident in this conversation."
+          },
+          "information": {
+            "type": "string",
+            "description": "Additional resident information, at most 2000 characters."
+          }
+        },
+        "required": [
+          "conversation_id",
+          "turn_id",
+          "reference_number",
+          "information"
+        ]
+      }
+    }
+  }
+}

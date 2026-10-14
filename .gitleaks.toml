@@ -1,0 +1,35 @@
+title = "CivicOps: default rules with exact synthetic fixture exceptions"
+[extend]
+useDefault = true
+
+# BC's merged baseline history uses this documented ephemeral CI literal.
+# Require both the exact workflow path and exact value; no commits/files/rules are broadly excluded.
+[[allowlists]]
+description = "Historical baseline CI-only bearer fixture (documented in BC handoff)"
+targetRules = ["curl-auth-header"]
+condition = "AND"
+paths = ['''^\.github/workflows/dotnet\.yml$''']
+regexTarget = "match"
+regexes = ['''(?i)authorization: Bearer ci-dispatch-token['"]''']
+
+# Round-8 history contains this exact readiness-table heading, which is prose
+# about dependency tooling, not a credential. Preserve history; exclude only
+# this complete scanner match, in this file, under this rule.
+[[allowlists]]
+description = "Historical readiness heading false positive (no credential)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^docs/ENTERPRISE_READINESS\.md$''']
+regexTarget = "match"
+regexes = ['''^API contracts, dependency/advisory/SBOM $''']
+
+# Round-10 OpenAPI prose describes per-request credential expiry/revocation.
+# The generic API-key rule mistakes this exact English phrase for a key. Keep
+# history intact and allow only the whole match in these two contract files.
+[[allowlists]]
+description = "Crew OpenAPI expiry/revocation prose false positive (no credential)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^products/civicops/Services/OpenApiDocument\.cs$''', '''^docs/api/openapi\.json$''']
+regexTarget = "match"
+regexes = ['''^access, expiry/revocation $''']

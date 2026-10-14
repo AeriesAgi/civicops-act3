@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/sos-alert.schema.json",
+  "title": "Tenant-scoped SOS alert",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "tenantId", "status", "channel", "contactHash", "staffName", "crewName", "silent", "triggeredAt", "followUpUntil", "cancelUntil", "location", "accuracyMeters", "batteryPercent", "addressOrLandmark", "acknowledgedAt", "resolvedAt", "escalationLevel", "lastHumanActor", "audit", "repeatedFalseAlarmReview", "synthetic"],
+  "properties": {
+    "id": {"type": "string", "minLength": 8, "maxLength": 80},
+    "tenantId": {"type": "string", "minLength": 1, "maxLength": 64},
+    "status": {"type": "string", "enum": ["AwaitingLocation", "Triggered", "Acknowledged", "Assessing", "Dispatched", "Resolved", "FalseAlarm", "Cancelled"]},
+    "channel": {"type": "string", "minLength": 2, "maxLength": 32},
+    "contactHash": {"type": "string", "pattern": "^(anonymous|[A-F0-9]{64})$"},
+    "staffName": {"type": ["string", "null"], "maxLength": 160},
+    "crewName": {"type": ["string", "null"], "maxLength": 160},
+    "silent": {"type": "boolean"},
+    "triggeredAt": {"type": "string", "format": "date-time"},
+    "followUpUntil": {"type": "string", "format": "date-time"},
+    "cancelUntil": {"type": "string", "format": "date-time"},
+    "location": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/point"}]},
+    "accuracyMeters": {"type": ["number", "null"], "minimum": 0, "maximum": 10000},
+    "batteryPercent": {"type": ["integer", "null"], "minimum": 0, "maximum": 100},
+    "addressOrLandmark": {"type": ["string", "null"], "maxLength": 240},
+    "acknowledgedAt": {"type": ["string", "null"], "format": "date-time"},
+    "resolvedAt": {"type": ["string", "null"], "format": "date-time"},
+    "escalationLevel": {"type": ["string", "null"], "enum": ["supervisor", "duty-manager", null]},
+    "lastHumanActor": {"type": ["string", "null"], "maxLength": 160},
+    "audit": {"type": "array", "items": {"$ref": "#/$defs/audit"}},
+    "repeatedFalseAlarmReview": {"type": "boolean", "description": "True only when a named human should review another false alarm from the same requester. It is not a score, count or penalty."},
+    "synthetic": {"type": "boolean"}
+  },
+  "$defs": {
+    "point": {"type": "object", "additionalProperties": false, "required": ["longitude", "latitude"], "properties": {"longitude": {"type": "number", "minimum": 16, "maximum": 33}, "latitude": {"type": "number", "minimum": -35, "maximum": -22}}},
+    "audit": {"type": "object", "additionalProperties": false, "required": ["action", "actor", "note", "at"], "properties": {"action": {"type": "string", "minLength": 1, "maxLength": 64}, "actor": {"type": "string", "minLength": 1, "maxLength": 160}, "note": {"type": ["string", "null"], "maxLength": 2000}, "at": {"type": "string", "format": "date-time"}}}
+  },
+  "description": "Resident contacts are represented by a tenant-bound hash. This contract contains no raw contact, imagery, biometric or person-risk field."
+}

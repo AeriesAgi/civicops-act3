@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/map-hazard-request.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "crash",
+        "stalled-vehicle",
+        "flooding",
+        "fire",
+        "smoke",
+        "blocked-lane",
+        "debris",
+        "downed-line",
+        "open-trench",
+        "water",
+        "burst-main",
+        "road-blocked"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "longitude": {
+          "type": "number",
+          "minimum": 16,
+          "maximum": 33
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -35,
+          "maximum": -22
+        }
+      },
+      "required": [
+        "longitude",
+        "latitude"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "exclusionRadiusMeters": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2000
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cameraId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 2000
+    }
+  },
+  "required": [
+    "id",
+    "eventType",
+    "title",
+    "location",
+    "confidence",
+    "exclusionRadiusMeters",
+    "occurredAt",
+    "cameraId",
+    "reason"
+  ],
+  "description": "Object/situation event reviewed by a named authorized supervisor. All fields required, including cameraId:null when absent. Unknown fields, imagery, identification and person scoring are rejected. Event must be within the default seven-day retention window and not in the future.",
+  "example": {
+    "id": "synthetic-hazard-01",
+    "eventType": "burst-main",
+    "title": "Synthetic burst main exercise",
+    "location": {
+      "longitude": 30.975,
+      "latitude": -29.91
+    },
+    "confidence": 0.9,
+    "exclusionRadiusMeters": 80,
+    "occurredAt": "2026-10-08T12:00:00Z",
+    "cameraId": null,
+    "reason": "Synthetic exercise reviewed by a named supervisor; no imagery or real location."
+  }
+}

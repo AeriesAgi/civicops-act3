@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/sos-ussd-request.schema.json",
+  "title": "Synthetic USSD SOS menu input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sessionId", "text", "sender", "tenantId"],
+  "properties": {
+    "sessionId": {"type": "string", "minLength": 8, "maxLength": 128},
+    "text": {"type": "string", "minLength": 1, "maxLength": 320},
+    "sender": {"type": ["string", "null"], "maxLength": 320},
+    "tenantId": {"type": ["string", "null"], "maxLength": 64}
+  },
+  "description": "*120*xxx# is a simulated adapter shape pending a contracted aggregator, sender verification and municipal acceptance."
+}

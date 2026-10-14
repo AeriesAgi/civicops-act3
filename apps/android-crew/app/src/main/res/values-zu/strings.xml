@@ -1,0 +1,9 @@
+<resources>
+    <string name="jobs">Imisebenzi</string>
+    <string name="my_jobs">Imisebenzi yami</string>
+    <string name="shift">Ishifu</string>
+    <string name="settings">Izilungiselelo</string>
+    <string name="withdraw_consent">Hoxisa imvume</string>
+    <string name="off_shift">Awukho emsebenzini · ukwabelana ngendawo KUCISHIWE</string>
+    <string name="collection_notice">Hlola, dlulisela futhi uphathe inkinga yenkonzo kamasipala ebikiwe; thumela ukwaziswa ngenkonzo kuphela uma kucelwe ngokwehlukana.</string>
+</resources>

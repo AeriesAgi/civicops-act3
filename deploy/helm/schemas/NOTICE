@@ -1,0 +1,5 @@
+The ServiceMonitor schema is derived from Prometheus Operator v0.87.1,
+Copyright The Prometheus Authors, licensed under Apache License 2.0.
+Source: example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+Modifications: extracted v1 validation schema, omitted descriptions/titles,
+added draft-07 declaration and generic Kubernetes metadata validation.

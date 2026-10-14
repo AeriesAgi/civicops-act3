@@ -1,0 +1,10 @@
+storage:
+  mode: file
+  persistence:
+    enabled: true
+existingSecret: ""
+config:
+  CIVICOPS_DEMO_MODE: "true"
+  AllowedHosts: localhost
+migration:
+  enabled: false

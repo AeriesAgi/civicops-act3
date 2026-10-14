@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civicops.example.invalid/schemas/sos-location-request.schema.json",
+  "title": "Active SOS follow-up location",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["operationId", "location", "accuracyMeters", "addressOrLandmark", "visibleIndicator", "consentId"],
+  "properties": {
+    "operationId": {"type": "string", "minLength": 8, "maxLength": 128},
+    "location": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/point"}]},
+    "accuracyMeters": {"type": ["number", "null"], "minimum": 0, "maximum": 10000},
+    "addressOrLandmark": {"type": ["string", "null"], "maxLength": 240},
+    "visibleIndicator": {"type": "boolean"},
+    "consentId": {"type": ["string", "null"], "maxLength": 128}
+  },
+  "$defs": {
+    "point": {
+      "type": "object", "additionalProperties": false,
+      "required": ["longitude", "latitude"],
+      "properties": {
+        "longitude": {"type": "number", "minimum": 16, "maximum": 33},
+        "latitude": {"type": "number", "minimum": -35, "maximum": -22}
+      }
+    }
+  },
+  "description": "Accepted only while this tenant's SOS is active and inside its bounded follow-up window. No coordinates are retained after resolution or expiry."
+}
